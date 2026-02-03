@@ -1,43 +1,34 @@
 /*
-  Проект для ESP8266 (Wi-Fi Troyka Module):
+  Проект для ESP8266 (Wi-Fi Troyka Module) — режим STA (клиент Wi-Fi):
 
-  Задача:
-  - ESP8266 поднимает точку доступа (Wi-Fi AP) и веб-страницу.
-  - На веб-странице показываются "маршруты" и сколько людей их выбрало.
-  - Arduino присылает события в ESP по Serial (UART).
-  - ESP увеличивает счётчики и отдаёт их на страницу.
+  Алгоритм работы
+  - ESP8266 подключается к существующей точке доступа (Wi-Fi роутеру) и поднимает веб-сервер в вашей сети.
+  - Arduino присылает заявки по Serial (UART), которая содержит UID карты и выбранный маршрут.
+  - ESP сохраняет заявки в память (уникально по UID карты) и считает, сколько уникальных карт выбрало каждый маршрут.
+  - На веб-странице показываются маршруты и количество уникальных карт, которые их выбрали.
 
-  Протокол по Serial:
-    ROUTE=<index>\n
-  где <index> — номер маршрута (0..N-1)
-
-  Пример строки от Arduino:
-    ROUTE=0
-    ROUTE=2
-    ROUTE=2
-
-  Тогда счётчики станут:
-    route0 += 1
-    route2 += 2
-
-  Как пользоваться:
-  - Подключись к Wi-Fi: SSID "STEM_SK", пароль "passk123"
-  - Открой в браузере: http://192.168.4.1/
+  Тест:
+  - Для добавления заявки отправляем в Serial:
+    - CARD=1234ABCD;ROUTE=1
+    - CARD=4321ABCD;ROUTE=2
+  - Для удаления заявки отправляем в Serial: REMOVE=1234ABCD
 */
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
-// -------------------- Wi-Fi (точка доступа) --------------------
+// WIFI параметры вашей сети
+static const char* WIFI_SSID = "ALTEST";
+static const char* WIFI_PASS = "passtest";
+
+// AP параметры (точка доступа ESP)
 static const char* AP_SSID = "STEM_SK";
 static const char* AP_PASS = "passk123";
 
-// -------------------- Веб-сервер --------------------
+// Cоздаём веб-сервер на порту 80
 ESP8266WebServer server(80);
 
-// -------------------- Данные (маршруты и счётчики) --------------------
-// Названия маршрутов
-// Важно: количество маршрутов = ROUTES_COUNT
+// Данные маршрутов
 static const uint8_t ROUTES_COUNT = 3;
 
 const char* ROUTE_NAMES[ROUTES_COUNT] = {
@@ -46,15 +37,29 @@ const char* ROUTE_NAMES[ROUTES_COUNT] = {
   "YELLOW",
 };
 
-// Счётчики (сколько людей выбрало маршрут)
-volatile uint32_t routeCounts[ROUTES_COUNT] = {0, 0, 0};
+// Хранилище заявок по картам
 
-// -------------------- Приём по Serial --------------------
-// Буфер строки, которую читаем из UART
+// MAX_CARDS задаёт максимальное количество уникальных карт, которые мы запомним
+static const uint16_t MAX_CARDS = 200;
+
+// Заявка: (uid_hash + uid_len) -> route
+// Храним hash (FNV-1a 32-bit) от HEX-строки и длину HEX-строки
+struct CardRecord {
+  uint32_t hash;
+  uint8_t uidLen;  // длина HEX UID (символов)
+  uint8_t route;   // 0..ROUTES_COUNT-1
+  bool used;
+};
+
+CardRecord cards[MAX_CARDS];
+
+// Счётчики маршрутов
+uint16_t routeCounts[ROUTES_COUNT] = { 0, 0, 0 };
+
+// Приём по Serial
 String serialLine;
 
-// -------------------- HTML страница --------------------
-// Cписок, который обновляется fetch'ем /data раз в 300 мс
+// HTML
 const char INDEX_HTML[] PROGMEM = R"HTML(
 <!doctype html>
 <html lang="ru">
@@ -73,6 +78,8 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
     .count { font-weight: 700; }
     .status { margin-top: 10px; font-size: 12px; opacity: .7; }
     button { margin-top: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer; }
+    .row { display:flex; gap: 8px; flex-wrap: wrap; }
+    select { padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #fff; }
   </style>
 </head>
 <body>
@@ -81,7 +88,14 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
 
     <ul id="list"></ul>
 
-    <button id="resetBtn">Сбросить счётчики</button>
+    <div class="row">
+      <button id="resetAllBtn">Сбросить все</button>
+
+      <br>
+      <select id="routeSel"></select>
+      <button id="resetRouteBtn">Сбросить выбранный маршрут</button>
+    </div>
+
     <div id="status" class="status">Подключение…</div>
   </div>
 
@@ -90,7 +104,7 @@ async function load(){
   try{
     const r = await fetch('/data', { cache: 'no-store' });
     if(!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json(); // { routes: [{name, count}, ...] }
+    const data = await r.json(); // { routes:[{name,count,index},...], total }
 
     const ul = document.getElementById('list');
     ul.innerHTML = '';
@@ -111,20 +125,35 @@ async function load(){
       ul.appendChild(li);
     }
 
+    // селект для сброса маршрута (инициализируем один раз)
+    const sel = document.getElementById('routeSel');
+    if(sel.options.length === 0){
+      for(const item of data.routes){
+        const opt = document.createElement('option');
+        opt.value = item.index;
+        opt.textContent = item.name;
+        sel.appendChild(opt);
+      }
+    }
+
     document.getElementById('status').textContent =
-      'Обновлено: ' + new Date().toLocaleTimeString();
+      'Обновлено: ' + new Date().toLocaleTimeString() + ' | Всего заявок: ' + data.total;
   }catch(e){
     document.getElementById('status').textContent = 'Ошибка: ' + e.message;
   }
 }
 
-// Периодическое обновление
 setInterval(load, 300);
 load();
 
-// Сброс — GET /reset
-document.getElementById('resetBtn').onclick = async () => {
+document.getElementById('resetAllBtn').onclick = async () => {
   await fetch('/reset', { cache: 'no-store' });
+  load();
+};
+
+document.getElementById('resetRouteBtn').onclick = async () => {
+  const idx = document.getElementById('routeSel').value;
+  await fetch('/reset?route=' + encodeURIComponent(idx), { cache: 'no-store' });
   load();
 };
 </script>
@@ -132,124 +161,285 @@ document.getElementById('resetBtn').onclick = async () => {
 </html>
 )HTML";
 
-// -------------------- HTTP handlers --------------------
+// Утилита FNV-1a 32-bit hash
+uint32_t fnv1a(const char* s, uint8_t len) {
+  uint32_t h = 2166136261u;
+  for (uint8_t i = 0; i < len; i++) {
+    h ^= (uint8_t)s[i];
+    h *= 16777619u;
+  }
+  return h;
+}
 
-// Отдаём главную страницу
+// Хранилище заявок по картам
+int findCard(uint32_t hash, uint8_t uidLen) {
+  for (uint16_t i = 0; i < MAX_CARDS; i++) {
+    if (cards[i].used && cards[i].hash == hash && cards[i].uidLen == uidLen) return (int)i;
+  }
+  return -1;
+}
+
+// Найти свободный слот для новой карты
+int findFreeSlot() {
+  for (uint16_t i = 0; i < MAX_CARDS; i++) {
+    if (!cards[i].used) return (int)i;
+  }
+  return -1;
+}
+
+// Подсчитать общее количество уникальных карт
+uint16_t totalCards() {
+  uint16_t t = 0;
+  for (uint16_t i = 0; i < MAX_CARDS; i++)
+    if (cards[i].used) t++;
+  return t;
+}
+
+// Добавление или обновление заявки по карте
+void applyVote(uint32_t hash, uint8_t uidLen, uint8_t route) {
+  int pos = findCard(hash, uidLen);
+
+  if (pos >= 0) {
+    // Карта уже есть
+    uint8_t oldRoute = cards[pos].route;
+    if (oldRoute == route) {
+      // Если тот же маршрут — ничего не делаем
+      return;
+    }
+    // Переназначение маршрута
+    if (oldRoute < ROUTES_COUNT && routeCounts[oldRoute] > 0) routeCounts[oldRoute]--;
+    cards[pos].route = route;
+    routeCounts[route]++;
+    return;
+  }
+
+  // Новая карта
+  int freePos = findFreeSlot();
+  if (freePos < 0) {
+    // Переполнение таблицы — можно игнорировать или сбрасывать всё
+    // Здесь просто игнорируем новую карту
+    return;
+  }
+
+  cards[freePos].used = true;
+  cards[freePos].hash = hash;
+  cards[freePos].uidLen = uidLen;
+  cards[freePos].route = route;
+  routeCounts[route]++;
+}
+
+// Удаление заявки по карте
+bool removeVote(uint32_t hash, uint8_t uidLen) {
+  int pos = findCard(hash, uidLen);
+  if (pos < 0) return false;
+
+  uint8_t r = cards[pos].route;
+  if (r < ROUTES_COUNT && routeCounts[r] > 0) routeCounts[r]--;
+
+  cards[pos].used = false;
+  return true;
+}
+
+// Сброс всех заявок
+void resetAll() {
+  for (uint16_t i = 0; i < MAX_CARDS; i++) cards[i].used = false;
+  for (uint8_t r = 0; r < ROUTES_COUNT; r++) routeCounts[r] = 0;
+}
+
+// Сброс заявок конкретного маршрута
+void resetRoute(uint8_t route) {
+  if (route >= ROUTES_COUNT) return;
+
+  for (uint16_t i = 0; i < MAX_CARDS; i++) {
+    if (cards[i].used && cards[i].route == route) {
+      cards[i].used = false;
+    }
+  }
+
+  // Пересчёт счётчиков
+  for (uint8_t r = 0; r < ROUTES_COUNT; r++) routeCounts[r] = 0;
+  for (uint16_t i = 0; i < MAX_CARDS; i++) {
+    if (cards[i].used && cards[i].route < ROUTES_COUNT) routeCounts[cards[i].route]++;
+  }
+}
+
+// Хэндлер для корня /
 void handleRoot() {
   server.send_P(200, "text/html; charset=utf-8", INDEX_HTML);
 }
 
-// Отдаём данные в JSON:
-// {
-//   "routes":[{"name":"...","count":1}, ...]
-// }
+// Хэндлер для /data — отдаём JSON с данными
 void handleData() {
-  // Собираем JSON вручную, чтобы не тянуть дополнительные библиотеки
-
   String json;
-  json.reserve(512); // чуть ускоряет работу/уменьшает фрагментацию памяти
+  json.reserve(512);
 
   json += "{\"routes\":[";
   for (uint8_t i = 0; i < ROUTES_COUNT; i++) {
     if (i > 0) json += ",";
-    json += "{\"name\":\"";
+    json += "{\"index\":";
+    json += String(i);
+    json += ",\"name\":\"";
     json += ROUTE_NAMES[i];
     json += "\",\"count\":";
     json += String(routeCounts[i]);
     json += "}";
   }
-  json += "]}";
+  json += "],\"total\":";
+  json += String(totalCards());
+  json += "}";
 
   server.send(200, "application/json; charset=utf-8", json);
 }
 
-// Сбросить счётчики
+// Хэндлеры для /reset (сброс всего) или /reset?route=N (сброс маршрута N)
 void handleReset() {
-  for (uint8_t i = 0; i < ROUTES_COUNT; i++) {
-    routeCounts[i] = 0;
+  if (server.hasArg("route")) {
+    int r = server.arg("route").toInt();
+    if (r >= 0 && r < ROUTES_COUNT) {
+      resetRoute((uint8_t)r);
+      server.send(200, "text/plain; charset=utf-8", "OK ROUTE RESET");
+      return;
+    }
+    server.send(400, "text/plain; charset=utf-8", "Bad route");
+    return;
   }
-  server.send(200, "text/plain; charset=utf-8", "OK");
+
+  resetAll();
+  server.send(200, "text/plain; charset=utf-8", "OK ALL RESET");
 }
 
-// -------------------- Парсер Serial --------------------
-/*
-  Мы читаем UART посимвольно и копим строку до '\n'.
-  Когда пришёл '\n', ожидаем формат:
+// Парсер строки из Serial (CARD=<HEX>;ROUTE=<idx>)
+bool parseKeyValue(const String& line, const char* key, String& out) {
+  int p = line.indexOf(key);
+  if (p < 0) return false;
+  p += strlen(key);
 
-    ROUTE=<index>
+  int end = line.indexOf(';', p);
+  if (end < 0) end = line.length();
 
-  Примеры корректных строк:
-    ROUTE=0
-    ROUTE=3
-    ROUTE=2
-
-  Если индекс некорректный — игнорируем
-*/
-void processSerialLine(const String& line) {
-  // Защита от мусора
-  if (!line.startsWith("ROUTE=")) return;
-
-  // Берём подстроку после "ROUTE=" и превращаем в число
-  int idx = line.substring(6).toInt();
-
-  // Проверяем диапазон
-  if (idx < 0 || idx >= ROUTES_COUNT) return;
-
-  // Увеличиваем счётчик выбранного маршрута
-  routeCounts[idx]++;
+  out = line.substring(p, end);
+  out.trim();
+  return out.length() > 0;
 }
 
+// Проверка, что строка состоит из HEX символов
+bool isHexString(const String& s) {
+  for (uint16_t i = 0; i < s.length(); i++) {
+    char c = s[i];
+    bool ok = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    if (!ok) return false;
+  }
+  return true;
+}
+
+// Обработка строки из Serial
+void processSerialLine(const String& rawLine) {
+  String line = rawLine;
+  line.trim();
+  if (line.length() == 0) return;
+
+  // Проверка удаления: REMOVE=<HEX_UID>
+  if (line.startsWith("REMOVE=")) {
+    String uidHex = line.substring(7);
+    uidHex.trim();
+
+    if (!isHexString(uidHex)) return;
+
+    uint8_t uidLen = (uidHex.length() > 250) ? 250 : (uint8_t)uidHex.length();
+    uint32_t h = fnv1a(uidHex.c_str(), uidLen);
+
+    removeVote(h, uidLen);  // если не было — просто ничего
+    return;
+  }
+
+  // Иначе — попытка парсинга CARD и ROUTE
+  line.replace(" ", ";");
+
+  String uidHex, routeStr;
+  if (!parseKeyValue(line, "CARD=", uidHex)) return;
+  if (!parseKeyValue(line, "ROUTE=", routeStr)) return;
+
+  if (!isHexString(uidHex)) return;
+
+  int route = routeStr.toInt();
+  if (route < 0 || route >= ROUTES_COUNT) return;
+
+  // Считаем hash от HEX строки UID
+  uint8_t uidLen = (uidHex.length() > 250) ? 250 : (uint8_t)uidHex.length();
+  uint32_t h = fnv1a(uidHex.c_str(), uidLen);
+
+  applyVote(h, uidLen, (uint8_t)route);
+}
+
+// Опрашиваем Serial и собираем строки
 void pollSerial() {
   while (Serial.available()) {
     char c = (char)Serial.read();
 
-    // Если пришла новая строка
     if (c == '\n') {
-      serialLine.trim();           // убираем пробелы и '\r' (Windows-окончания)
-      if (serialLine.length() > 0) {
-        processSerialLine(serialLine);
-      }
-      serialLine = "";             // очищаем буфер на следующую строку
+      serialLine.trim();
+      if (serialLine.length() > 0) processSerialLine(serialLine);
+      serialLine = "";
     } else {
-      // Ограничим размер буфера, чтобы не разрастался от мусора
-      if (serialLine.length() < 80) {
-        serialLine += c;
-      } else {
-        // Если строка слишком длинная — сброс (защита)
-        serialLine = "";
-      }
+      if (serialLine.length() < 120) serialLine += c;
+      else serialLine = "";
     }
   }
 }
 
-// -------------------- setup / loop --------------------
+// Подключение к Wi-Fi
+void connectWiFi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.persistent(false);
+  WiFi.setAutoReconnect(true);
+
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+  Serial.println();
+  Serial.print("Connecting to Wi-Fi: ");
+  Serial.println(WIFI_SSID);
+
+  const uint32_t tStart = millis();
+  const uint32_t timeoutMs = 20000;
+
+  while (WiFi.status() != WL_CONNECTED && (millis() - tStart) < timeoutMs) {
+    delay(300);
+    Serial.print(".");
+  }
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Wi-Fi connected!");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("Wi-Fi connect FAILED (timeout).");
+  }
+}
+
+// Настройка и главный цикл
 void setup() {
-  /*
-    Serial тут — UART, которым ESP общается с Arduino.
-    Скорость должна совпадать у обеих сторон.
-    115200 — удобно, но если на проводах шумно, можно поставить 9600/57600.
-  */
   Serial.begin(115200);
   delay(50);
 
+  resetAll();
+
+  // Соединяемся с Wi-Fi
+  connectWiFi();
+
   // Поднимаем точку доступа
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(AP_SSID, AP_PASS);
+  // WiFi.mode(WIFI_AP);
+  // WiFi.softAP(AP_SSID, AP_PASS);
 
-  // Роут у ESP AP обычно 192.168.4.1 (стандартно для ESP8266 SoftAP)
-
-  // Регистрируем маршруты HTTP
   server.on("/", HTTP_GET, handleRoot);
   server.on("/data", HTTP_GET, handleData);
   server.on("/reset", HTTP_GET, handleReset);
 
   server.begin();
+  Serial.println("HTTP server started.");
 }
 
 void loop() {
-  // Обслуживаем HTTP клиентов (браузер)
   server.handleClient();
-
-  // Читаем события от Arduino
   pollSerial();
 }

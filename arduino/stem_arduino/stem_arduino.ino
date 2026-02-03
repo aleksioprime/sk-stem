@@ -1,63 +1,47 @@
-/*
-  Проект для Arduino
-
-  Задача:
-  - Есть 3 кнопки, каждая соответствует своему маршруту
-  - При НАЖАТИИ кнопки отправляем в ESP событие по UART:
-        ROUTE=<index>\n
-  - ESP принимает и увеличивает счётчики на веб-странице
-
-  Кнопки подключены к пинам:
-    Route 0 -> D9
-    Route 1 -> D12
-    Route 2 -> A1 (как цифровой пин)
-
-  Подключение кнопок:
-  - Один контакт кнопки -> GND
-  - Второй контакт кнопки -> указанный пин (D9 / D12 / A1)
-  - В коде включаем INPUT_PULLUP, поэтому логика такая:
-      отпущена = HIGH
-      нажата   = LOW
-
-  Связь с ESP:
-  - Используем SoftwareSerial на A4/A5
-*/
-
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <Adafruit_PN532.h>
 
 // -------------------- UART к ESP --------------------
-// (от TX, от RX)
-SoftwareSerial esp(11, A3);
+// Arduino RX <- ESP TX
+// Arduino TX -> ESP RX
+SoftwareSerial esp(11, A3);  // RX=11, TX=A3
 
 // -------------------- PN532 --------------------
-#define PN532_IRQ  6
-#define LED 9
-
-Adafruit_PN532 nfc(PN532_IRQ, 100);
+// Вариант с IRQ + I2C
+#define PN532_IRQ 6
+#define PN532_RESET -1  // -1 если reset pin не подключён
+Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
 
 // -------------------- Маршруты --------------------
 const uint8_t ROUTES_COUNT = 3;
 
-// Кнопки маршрутов
+// Кнопки маршрутов (как у тебя сейчас)
 const uint8_t BTN_ROUTE_GREEN = 13;
 const uint8_t BTN_ROUTE_BLUE = 12;
 const uint8_t BTN_ROUTE_YELOW = 10;
 
 const uint8_t BTN_CANCEL = 8;
 
+// LED-индикатор состояния
+const uint8_t LED_PIN = 9;
+
 // Пины в массив для удобства
-const uint8_t BTN_PINS[ROUTES_COUNT] = {BTN_ROUTE_GREEN, BTN_ROUTE_BLUE, BTN_ROUTE_YELOW};
+const uint8_t BTN_PINS[ROUTES_COUNT] = { BTN_ROUTE_GREEN, BTN_ROUTE_BLUE, BTN_ROUTE_YELOW };
 
 // -------------------- Антидребезг --------------------
-// Время, в течение которого игнорируем повторные срабатывания после клика
 const unsigned long DEBOUNCE_MS = 80;
-// Последнее подтверждённое состояние кнопок (true = нажата, false = отпущена)
-bool lastPressed[ROUTES_COUNT] = {false, false, false};
-// Время последнего изменения состояния (по каждой кнопке отдельно)
-unsigned long lastChangeAt[ROUTES_COUNT] = {0, 0, 0};
 
+struct DebouncedButton {
+  uint8_t pin;
+  bool lastStable;
+  unsigned long lastChangeAt;
+};
+
+DebouncedButton btnRoutes[ROUTES_COUNT];
+DebouncedButton btnCancel;
+
+// -------------------- FSM --------------------
 enum SystemState {
   STATE_WAIT_CARD,
   STATE_WAIT_BUTTON
@@ -65,44 +49,68 @@ enum SystemState {
 
 SystemState state = STATE_WAIT_CARD;
 
-// Отправка маршрута
-void sendRoute(uint8_t idx) {
-  // Протокол: ROUTE=<index>\n
-  esp.print("ROUTE=");
-  esp.println(idx);
+String lastUidHex;  // UID последней карты в hex
+unsigned long waitButtonSince = 0;
+const unsigned long WAIT_BUTTON_TIMEOUT_MS = 10000;  // 10 сек на выбор маршрута
 
-  // Лог в USB Serial
-  Serial.print("Sent: ROUTE=");
-  Serial.println(idx);
+// -------------------- helpers --------------------
+bool isPressedRaw(uint8_t pin) {
+  // INPUT_PULLUP: pressed = LOW
+  return (digitalRead(pin) == LOW);
 }
 
-// Чтение кнопки с антидребезгом
-bool checkButtonPressed(uint8_t i) {
-  // При INPUT_PULLUP:
-  //   отпущена -> HIGH
-  //   нажата   -> LOW
-  bool pressedNow = (digitalRead(BTN_PINS[i]) == LOW);
+bool checkPressed(DebouncedButton& b) {
+  bool pressedNow = isPressedRaw(b.pin);
 
-  // Если состояние изменилось — запоминаем время изменения
-  if (pressedNow != lastPressed[i]) {
-    // Сразу не принимаем, а ждём, пока пройдёт DEBOUNCE_MS
-    if (millis() - lastChangeAt[i] >= DEBOUNCE_MS) {
-      lastChangeAt[i] = millis();
-      // Здесь фиксируем новое стабильное состояние
-      bool wasPressed = lastPressed[i];
-      lastPressed[i] = pressedNow;
+  // Если состояние изменилось — ждём стабилизацию
+  if (pressedNow != b.lastStable) {
+    if (millis() - b.lastChangeAt >= DEBOUNCE_MS) {
+      b.lastChangeAt = millis();
+      bool was = b.lastStable;
+      b.lastStable = pressedNow;
 
-      // Событие "нажатие" — это переход: было не нажато -> стало нажато
-      if (!wasPressed && pressedNow) {
-        return true;
-      }
+      // событие "нажатие" = переход false -> true
+      if (!was && pressedNow) return true;
     }
   }
-
   return false;
 }
 
-// Проверка RFID
+String uidToHex(const uint8_t* uid, uint8_t len) {
+  const char* hex = "0123456789ABCDEF";
+  String s;
+  s.reserve(len * 2);
+  for (uint8_t i = 0; i < len; i++) {
+    uint8_t v = uid[i];
+    s += hex[(v >> 4) & 0x0F];
+    s += hex[v & 0x0F];
+  }
+  return s;
+}
+
+// Отправка заявки в ESP: CARD=<uid>;ROUTE=<idx>
+void sendVote(const String& uidHex, uint8_t idx) {
+  esp.print("CARD=");
+  esp.print(uidHex);
+  esp.print(";ROUTE=");
+  esp.println(idx);
+
+  Serial.print("Sent: CARD=");
+  Serial.print(uidHex);
+  Serial.print(";ROUTE=");
+  Serial.println(idx);
+}
+
+// Отправка удаления заявки по карте: REMOVE=<uid>
+void sendRemove(const String& uidHex) {
+  esp.print("REMOVE=");
+  esp.println(uidHex);
+
+  Serial.print("Sent: REMOVE=");
+  Serial.println(uidHex);
+}
+
+// Проверка RFID: если карта найдена — сохраняем UID в lastUidHex
 bool checkRFID() {
   uint8_t uid[8];
   uint8_t uidLength;
@@ -110,78 +118,110 @@ bool checkRFID() {
   bool success = nfc.readPassiveTargetID(
     PN532_MIFARE_ISO14443A,
     uid,
-    &uidLength
-  );
+    &uidLength);
 
-  if (success) {
-    Serial.print("RFID UID: ");
-    nfc.PrintHex(uid, uidLength);
-    Serial.println();
-    return true;
+  if (!success) return false;
+
+  lastUidHex = uidToHex(uid, uidLength);
+
+  Serial.print("RFID UID: ");
+  Serial.println(lastUidHex);
+
+  return true;
+}
+
+void setupButtons() {
+  // Инициализация кнопок маршрутов
+  for (uint8_t i = 0; i < ROUTES_COUNT; i++) {
+    btnRoutes[i].pin = BTN_PINS[i];
+    btnRoutes[i].lastStable = false;
+    btnRoutes[i].lastChangeAt = 0;
+    pinMode(BTN_PINS[i], INPUT_PULLUP);
   }
 
-  return false;
+  // CANCEL
+  btnCancel.pin = BTN_CANCEL;
+  btnCancel.lastStable = false;
+  btnCancel.lastChangeAt = 0;
+  pinMode(BTN_CANCEL, INPUT_PULLUP);
 }
 
 void setup() {
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
 
-  // USB Serial
   Serial.begin(115200);
-
-  // SoftwareSerial
   esp.begin(115200);
 
-  // Настраиваем кнопки на вход с подтяжкой к питанию
-  pinMode(BTN_ROUTE_GREEN, INPUT_PULLUP);
-  pinMode(BTN_ROUTE_BLUE, INPUT_PULLUP);
-  pinMode(BTN_ROUTE_YELOW, INPUT_PULLUP);
-  pinMode(BTN_CANCEL, INPUT_PULLUP);
+  setupButtons();
 
   // NFC
   nfc.begin();
-  int versiondata = nfc.getFirmwareVersion();
+  uint32_t versiondata = nfc.getFirmwareVersion();
   if (!versiondata) {
-    Serial.print("Didn't find RFID/NFC reader");
-    while(1) {
-    }
+    Serial.println("Didn't find PN532");
+    while (1) { delay(50); }
   }
-
-  Serial.println("Found RFID/NFC reader");
-  // Настраиваем модуль
+  Serial.println("Found PN532");
   nfc.SAMConfig();
-  Serial.println("Arduino started");}
+
+  Serial.println("Arduino started");
+}
 
 void loop() {
-
   switch (state) {
 
-    // ------------------ Ждём карту ------------------
-    case STATE_WAIT_CARD: {
-      digitalWrite(LED, LOW);
+    case STATE_WAIT_CARD:
+      {
+        digitalWrite(LED_PIN, LOW);
 
-      if (checkRFID()) {
-        Serial.println("Card accepted. Waiting for button...");
-        state = STATE_WAIT_BUTTON;
+        // Ждём карту
+        if (checkRFID()) {
+          Serial.println("Card accepted. Waiting for route button or cancel...");
+          waitButtonSince = millis();
+          state = STATE_WAIT_BUTTON;
+        }
+        break;
       }
-      break;
-    }
 
-    // ------------------ Ждём кнопку ------------------
-    case STATE_WAIT_BUTTON: {
-      digitalWrite(LED, HIGH);
+    case STATE_WAIT_BUTTON:
+      {
+        digitalWrite(LED_PIN, HIGH);
 
-      for (uint8_t i = 0; i < ROUTES_COUNT; i++) {
-        if (checkButtonPressed(i)) {
-          sendRoute(i);
-          Serial.println("Route sent. Waiting for next card...");
+        // Таймаут ожидания выбора
+        if (millis() - waitButtonSince > WAIT_BUTTON_TIMEOUT_MS) {
+          Serial.println("Timeout. Waiting for next card...");
+          lastUidHex = "";
           state = STATE_WAIT_CARD;
           break;
         }
+
+        // CANCEL — удалить заявку по этой карте (неважно какой маршрут)
+        if (checkPressed(btnCancel)) {
+          if (lastUidHex.length() > 0) {
+            sendRemove(lastUidHex);
+          }
+          Serial.println("Cancel processed. Waiting for next card...");
+          lastUidHex = "";
+          state = STATE_WAIT_CARD;
+          break;
+        }
+
+        // Кнопки маршрутов — отправить заявку
+        for (uint8_t i = 0; i < ROUTES_COUNT; i++) {
+          if (checkPressed(btnRoutes[i])) {
+            if (lastUidHex.length() > 0) {
+              sendVote(lastUidHex, i);
+            }
+            Serial.println("Route sent. Waiting for next card...");
+            lastUidHex = "";
+            state = STATE_WAIT_CARD;
+            break;
+          }
+        }
+
+        break;
       }
-      break;
-    }
   }
 
   delay(1);
