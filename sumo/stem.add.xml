@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Остановки для автобусной системы - 3 маршрута по 7 остановок -->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+
+    <!-- Маршрут 1 - Северный (красный): по главной улице -->
+    <busStop id="stop1_1" name="Школа №5" lane="main_street_1_0" startPos="50.00" endPos="70.00" lines="1"/>
+    <busStop id="stop1_2" name="Парк Победы" lane="main_street_1_0" startPos="150.00" endPos="170.00" lines="1"/>
+    <busStop id="stop1_3" name="Центральная площадь [ХАБ]" lane="main_street_1_0" startPos="250.00" endPos="270.00" lines="1 3"/>
+    <busStop id="stop1_4" name="Театр драмы" lane="main_street_2_0" startPos="50.00" endPos="70.00" lines="1"/>
+    <busStop id="stop1_5" name="Торговый центр [ХАБ]" lane="main_street_2_0" startPos="150.00" endPos="170.00" lines="1 2 3"/>
+    <busStop id="stop1_6" name="Спортивный комплекс" lane="main_street_2_0" startPos="250.00" endPos="270.00" lines="1"/>
+    <busStop id="stop1_7" name="Университет" lane="main_street_3_0" startPos="100.00" endPos="120.00" lines="1"/>
+
+    <!-- Маршрут 2 - Южный (синий): по южной улице -->
+    <busStop id="stop2_1" name="Железнодорожный вокзал" lane="south_street_1_0" startPos="50.00" endPos="70.00" lines="2"/>
+    <busStop id="stop2_2" name="Промышленная зона" lane="south_street_1_0" startPos="150.00" endPos="170.00" lines="2"/>
+    <busStop id="stop2_3" name="Жилой район Южный" lane="south_street_1_0" startPos="250.00" endPos="270.00" lines="2"/>
+    <busStop id="stop2_4" name="Поликлиника №3" lane="south_street_2_0" startPos="50.00" endPos="70.00" lines="2"/>
+    <busStop id="stop2_5" name="Торговый центр [ХАБ]" lane="south_street_2_0" startPos="150.00" endPos="170.00" lines="2 3"/>
+    <busStop id="stop2_6" name="Больница" lane="south_street_2_0" startPos="250.00" endPos="270.00" lines="2"/>
+    <busStop id="stop2_7" name="Аэропорт" lane="south_street_3_0" startPos="100.00" endPos="120.00" lines="2"/>
+
+    <!-- Маршрут 3 - Западный (зелёный): по западной улице и далее -->
+    <busStop id="stop3_1" name="Автовокзал" lane="west_street_1_0" startPos="50.00" endPos="70.00" lines="3"/>
+    <busStop id="stop3_2" name="Музей истории" lane="west_street_2_0" startPos="50.00" endPos="70.00" lines="3"/>
+    <busStop id="stop3_3" name="Рынок" lane="south_street_1_0" startPos="50.00" endPos="70.00" lines="3"/>
+    <busStop id="stop3_4" name="Дворец культуры" lane="south_street_1_0" startPos="150.00" endPos="170.00" lines="3"/>
+    <!-- stop2_5 - Торговый центр (пересечение с 2 и 3) -->
+    <busStop id="stop3_6" name="Стадион" lane="south_street_2_0" startPos="200.00" endPos="220.00" lines="3"/>
+    <busStop id="stop3_7" name="Кинотеатр Космос" lane="south_street_3_0" startPos="50.00" endPos="70.00" lines="3"/>
+
+</additional>

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Городская сеть для автобусной системы - 3 маршрута -->
+
+<net version="1.20" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+
+    <location netOffset="0.00,0.00" convBoundary="0.00,0.00,1200.00,800.00" origBoundary="0.00,0.00,1200.00,800.00" projParameter="!"/>
+
+    <!-- Internal edges для перекрёстков -->
+    <edge id=":J1_0" function="internal">
+        <lane id=":J1_0_0" index="0" speed="13.89" length="4.67" shape="100.00,401.60 100.00,400.88 100.52,400.52 101.05,400.42 101.60,400.00"/>
+    </edge>
+    <edge id=":J1_1" function="internal">
+        <lane id=":J1_1_0" index="0" speed="13.89" length="3.20" shape="100.00,401.60 100.00,398.40"/>
+    </edge>
+    <edge id=":J2_0" function="internal">
+        <lane id=":J2_0_0" index="0" speed="13.89" length="3.20" shape="398.40,400.00 401.60,400.00"/>
+    </edge>
+    <edge id=":J2_1" function="internal">
+        <lane id=":J2_1_0" index="0" speed="13.89" length="3.20" shape="400.00,401.60 400.00,398.40"/>
+    </edge>
+    <edge id=":J3_0" function="internal">
+        <lane id=":J3_0_0" index="0" speed="13.89" length="3.20" shape="698.40,400.00 701.60,400.00"/>
+    </edge>
+    <edge id=":J3_1" function="internal">
+        <lane id=":J3_1_0" index="0" speed="13.89" length="3.20" shape="700.00,401.60 700.00,398.40"/>
+    </edge>
+    <edge id=":J5_0" function="internal">
+        <lane id=":J5_0_0" index="0" speed="13.89" length="4.67" shape="100.00,201.60 100.00,200.88 100.52,200.52 101.05,200.42 101.60,200.00"/>
+    </edge>
+    <edge id=":J5_1" function="internal">
+        <lane id=":J5_1_0" index="0" speed="13.89" length="3.20" shape="100.00,201.60 100.00,198.40"/>
+    </edge>
+    <edge id=":J6_0" function="internal">
+        <lane id=":J6_0_0" index="0" speed="13.89" length="3.20" shape="398.40,200.00 401.60,200.00"/>
+    </edge>
+    <edge id=":J6_1" function="internal">
+        <lane id=":J6_1_0" index="0" speed="13.89" length="3.20" shape="400.00,201.60 400.00,198.40"/>
+    </edge>
+    <edge id=":J7_0" function="internal">
+        <lane id=":J7_0_0" index="0" speed="13.89" length="3.20" shape="698.40,200.00 701.60,200.00"/>
+    </edge>
+    <edge id=":J7_1" function="internal">
+        <lane id=":J7_1_0" index="0" speed="13.89" length="3.20" shape="700.00,201.60 700.00,198.40"/>
+    </edge>
+
+    <!-- Дороги (edges) для автобусной системы -->
+
+    <!-- Главная улица (горизонтальная) - для маршрута 1 -->
+    <edge id="main_street_1" from="J1" to="J2" priority="1">
+        <lane id="main_street_1_0" index="0" speed="13.89" length="300.00" shape="101.60,400.00 398.40,400.00"/>
+    </edge>
+    <edge id="main_street_2" from="J2" to="J3" priority="1">
+        <lane id="main_street_2_0" index="0" speed="13.89" length="300.00" shape="401.60,400.00 698.40,400.00"/>
+    </edge>
+    <edge id="main_street_3" from="J3" to="J4" priority="1">
+        <lane id="main_street_3_0" index="0" speed="13.89" length="300.00" shape="701.60,400.00 1000.00,400.00"/>
+    </edge>
+
+    <!-- Южная улица (горизонтальная) - для маршрута 2 -->
+    <edge id="south_street_1" from="J5" to="J6" priority="1">
+        <lane id="south_street_1_0" index="0" speed="13.89" length="300.00" shape="101.60,200.00 398.40,200.00"/>
+    </edge>
+    <edge id="south_street_2" from="J6" to="J7" priority="1">
+        <lane id="south_street_2_0" index="0" speed="13.89" length="300.00" shape="401.60,200.00 698.40,200.00"/>
+    </edge>
+    <edge id="south_street_3" from="J7" to="J8" priority="1">
+        <lane id="south_street_3_0" index="0" speed="13.89" length="300.00" shape="701.60,200.00 1000.00,200.00"/>
+    </edge>
+
+    <!-- Западная улица (вертикальная) - для маршрута 3 -->
+    <edge id="west_street_1" from="J9" to="J1" priority="1">
+        <lane id="west_street_1_0" index="0" speed="13.89" length="200.00" shape="100.00,600.00 100.00,401.60"/>
+    </edge>
+    <edge id="west_street_2" from="J1" to="J5" priority="1">
+        <lane id="west_street_2_0" index="0" speed="13.89" length="200.00" shape="100.00,398.40 100.00,201.60"/>
+    </edge>
+    <edge id="west_street_3" from="J5" to="J10" priority="1">
+        <lane id="west_street_3_0" index="0" speed="13.89" length="150.00" shape="100.00,198.40 100.00,50.00"/>
+    </edge>
+
+    <!-- Центральная улица (вертикальная) - соединяет маршруты -->
+    <edge id="center_street_1" from="J11" to="J2" priority="1">
+        <lane id="center_street_1_0" index="0" speed="13.89" length="200.00" shape="400.00,600.00 400.00,401.60"/>
+    </edge>
+    <edge id="center_street_2" from="J2" to="J6" priority="1">
+        <lane id="center_street_2_0" index="0" speed="13.89" length="200.00" shape="400.00,398.40 400.00,201.60"/>
+    </edge>
+    <edge id="center_street_3" from="J6" to="J12" priority="1">
+        <lane id="center_street_3_0" index="0" speed="13.89" length="150.00" shape="400.00,198.40 400.00,50.00"/>
+    </edge>
+
+    <!-- Восточная улица (вертикальная) - для маршрутов -->
+    <edge id="east_street_1" from="J13" to="J3" priority="1">
+        <lane id="east_street_1_0" index="0" speed="13.89" length="200.00" shape="700.00,600.00 700.00,401.60"/>
+    </edge>
+    <edge id="east_street_2" from="J3" to="J7" priority="1">
+        <lane id="east_street_2_0" index="0" speed="13.89" length="200.00" shape="700.00,398.40 700.00,201.60"/>
+    </edge>
+    <edge id="east_street_3" from="J7" to="J14" priority="1">
+        <lane id="east_street_3_0" index="0" speed="13.89" length="150.00" shape="700.00,198.40 700.00,50.00"/>
+    </edge>
+
+    <!-- Перекрёстки (junctions) -->
+    <junction id="J1" type="priority" x="100.00" y="400.00" incLanes="west_street_1_0" intLanes=":J1_0_0 :J1_1_0" shape="101.60,400.00 101.60,398.40 100.00,398.40 100.00,401.60 100.52,401.82 100.74,402.04 100.96,402.48 101.18,403.15">
+        <request index="0" response="00" foes="00" cont="0"/>
+        <request index="1" response="00" foes="00" cont="0"/>
+    </junction>
+    <junction id="J2" type="priority" x="400.00" y="400.00" incLanes="main_street_1_0 center_street_1_0" intLanes=":J2_0_0 :J2_1_0" shape="401.60,400.00 401.60,398.40 400.00,398.40 400.00,401.60 400.52,401.82 400.74,402.04 400.96,402.48 401.18,403.15 398.40,400.00">
+        <request index="0" response="00" foes="00" cont="0"/>
+        <request index="1" response="00" foes="00" cont="0"/>
+    </junction>
+    <junction id="J3" type="priority" x="700.00" y="400.00" incLanes="main_street_2_0 east_street_1_0" intLanes=":J3_0_0 :J3_1_0" shape="701.60,400.00 701.60,398.40 700.00,398.40 700.00,401.60 700.52,401.82 700.74,402.04 700.96,402.48 701.18,403.15 698.40,400.00">
+        <request index="0" response="00" foes="00" cont="0"/>
+        <request index="1" response="00" foes="00" cont="0"/>
+    </junction>
+    <junction id="J4" type="dead_end" x="1000.00" y="400.00" incLanes="main_street_3_0" intLanes="" shape="1000.00,401.60 1000.00,398.40"/>
+
+    <junction id="J5" type="priority" x="100.00" y="200.00" incLanes="west_street_2_0" intLanes=":J5_0_0 :J5_1_0" shape="101.60,200.00 101.60,198.40 100.00,198.40 100.00,201.60 100.52,201.82 100.74,202.04 100.96,202.48 101.18,203.15">
+        <request index="0" response="00" foes="00" cont="0"/>
+        <request index="1" response="00" foes="00" cont="0"/>
+    </junction>
+    <junction id="J6" type="priority" x="400.00" y="200.00" incLanes="south_street_1_0 center_street_2_0" intLanes=":J6_0_0 :J6_1_0" shape="401.60,200.00 401.60,198.40 400.00,198.40 400.00,201.60 400.52,201.82 400.74,202.04 400.96,202.48 401.18,203.15 398.40,200.00">
+        <request index="0" response="00" foes="00" cont="0"/>
+        <request index="1" response="00" foes="00" cont="0"/>
+    </junction>
+    <junction id="J7" type="priority" x="700.00" y="200.00" incLanes="south_street_2_0 east_street_2_0" intLanes=":J7_0_0 :J7_1_0" shape="701.60,200.00 701.60,198.40 700.00,198.40 700.00,201.60 700.52,201.82 700.74,202.04 700.96,202.48 701.18,203.15 698.40,200.00">
+        <request index="0" response="00" foes="00" cont="0"/>
+        <request index="1" response="00" foes="00" cont="0"/>
+    </junction>
+    <junction id="J8" type="dead_end" x="1000.00" y="200.00" incLanes="south_street_3_0" intLanes="" shape="1000.00,201.60 1000.00,198.40"/>
+
+    <junction id="J9" type="dead_end" x="100.00" y="600.00" incLanes="" intLanes="" shape="101.60,600.00 98.40,600.00"/>
+    <junction id="J10" type="dead_end" x="100.00" y="50.00" incLanes="west_street_3_0" intLanes="" shape="100.00,48.40 100.00,51.60"/>
+    <junction id="J11" type="dead_end" x="400.00" y="600.00" incLanes="" intLanes="" shape="401.60,600.00 398.40,600.00"/>
+    <junction id="J12" type="dead_end" x="400.00" y="50.00" incLanes="center_street_3_0" intLanes="" shape="400.00,48.40 400.00,51.60"/>
+    <junction id="J13" type="dead_end" x="700.00" y="600.00" incLanes="" intLanes="" shape="701.60,600.00 698.40,600.00"/>
+    <junction id="J14" type="dead_end" x="700.00" y="50.00" incLanes="east_street_3_0" intLanes="" shape="700.00,48.40 700.00,51.60"/>
+
+    <!-- Соединения на перекрёстках -->
+    <connection from="west_street_1" to="main_street_1" fromLane="0" toLane="0" via=":J1_0_0" dir="r" state="M"/>
+    <connection from="west_street_1" to="west_street_2" fromLane="0" toLane="0" via=":J1_1_0" dir="s" state="M"/>
+    <connection from=":J1_0" to="main_street_1" fromLane="0" toLane="0" dir="r" state="M"/>
+    <connection from=":J1_1" to="west_street_2" fromLane="0" toLane="0" dir="s" state="M"/>
+
+    <connection from="main_street_1" to="main_street_2" fromLane="0" toLane="0" via=":J2_0_0" dir="s" state="M"/>
+    <connection from="center_street_1" to="center_street_2" fromLane="0" toLane="0" via=":J2_1_0" dir="s" state="M"/>
+    <connection from=":J2_0" to="main_street_2" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":J2_1" to="center_street_2" fromLane="0" toLane="0" dir="s" state="M"/>
+
+    <connection from="main_street_2" to="main_street_3" fromLane="0" toLane="0" via=":J3_0_0" dir="s" state="M"/>
+    <connection from="east_street_1" to="east_street_2" fromLane="0" toLane="0" via=":J3_1_0" dir="s" state="M"/>
+    <connection from=":J3_0" to="main_street_3" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":J3_1" to="east_street_2" fromLane="0" toLane="0" dir="s" state="M"/>
+
+    <connection from="west_street_2" to="south_street_1" fromLane="0" toLane="0" via=":J5_0_0" dir="r" state="M"/>
+    <connection from="west_street_2" to="west_street_3" fromLane="0" toLane="0" via=":J5_1_0" dir="s" state="M"/>
+    <connection from=":J5_0" to="south_street_1" fromLane="0" toLane="0" dir="r" state="M"/>
+    <connection from=":J5_1" to="west_street_3" fromLane="0" toLane="0" dir="s" state="M"/>
+
+    <connection from="south_street_1" to="south_street_2" fromLane="0" toLane="0" via=":J6_0_0" dir="s" state="M"/>
+    <connection from="center_street_2" to="center_street_3" fromLane="0" toLane="0" via=":J6_1_0" dir="s" state="M"/>
+    <connection from=":J6_0" to="south_street_2" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":J6_1" to="center_street_3" fromLane="0" toLane="0" dir="s" state="M"/>
+
+    <connection from="south_street_2" to="south_street_3" fromLane="0" toLane="0" via=":J7_0_0" dir="s" state="M"/>
+    <connection from="east_street_2" to="east_street_3" fromLane="0" toLane="0" via=":J7_1_0" dir="s" state="M"/>
+    <connection from=":J7_0" to="south_street_3" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":J7_1" to="east_street_3" fromLane="0" toLane="0" dir="s" state="M"/>
+
+</net>

@@ -26,14 +26,25 @@ STOP_DELAY = 3.0 # Время задержки на перекрёстке (се
 
 # Параметры движения
 BASE_SPEED = 30 # Базовая скорость (% от максимальной)
-KP = 0.5 # Коэффициент пропорциональной части для управления (настройка для лучшего следования по линии)
+KP = 0.2 # Коэффициент пропорциональной части для управления (настройка для лучшего следования по линии)
 MAX_SPEED = 90 # Максимальная скорость (% от максимальной)
+TURN_SPEED = 25 # Скорость поворота на перекрёстке
+TURN_DEGREES = 220 # Градусы поворота (подбирается под геометрию трассы)
+PASS_INTERSECTION_DEGREES = 300 # Проезд перекрёстка прямо
+AFTER_TURN_DEGREES = 220 # Движение вперёд после поворота для захвата линии
 
 # Калибровка датчиков
 L_WHITE = 70 # Отражение белого для левого датчика
 L_BLACK = 8 # Отражение чёрного для левого датчика
 R_WHITE = 70 # Отражение белого для правого датчика
 R_BLACK = 8 # Отражение чёрного для правого датчика
+
+# Сценарии движения по перекрёсткам после остановки "Picking up passengers"
+# Для green:
+# 1 - left, 2 - straight, 3 - right, 4 - stop
+ROUTE_POST_STOP_ACTIONS = {
+    "green": ("left", "straight", "right", "stop"),
+}
 
 
 def fetch_routes(ip):
@@ -69,6 +80,15 @@ def get_leader(routes):
 
     best_idx = max(range(len(routes)), key=lambda i: routes[i].get("count", 0))
     return best_idx, routes[best_idx]
+
+
+def get_post_stop_actions(route_name):
+    """Вернуть действия после остановки в зависимости от маршрута"""
+    normalized = str(route_name or "").strip().lower()
+    for route_key, actions in ROUTE_POST_STOP_ACTIONS.items():
+        if route_key in normalized:
+            return list(actions)
+    return []
 
 
 class Robot(object):
@@ -141,15 +161,24 @@ def movement(robot, follower, display, button, route_name="", total_intersection
     """
     intersections_passed = 0
     on_intersection = False
+    picked_up_passengers = False
+    post_stop_intersections = 0
+    route_actions = get_post_stop_actions(route_name)
 
-    display.update("Moving", SERVER_IP, intersections_passed, total_intersections, route_name)
+    # Для маршрутов со сценарием после остановки показываем общее количество
+    # перекрёстков: до остановки + количество действий после остановки.
+    display_total = total_intersections
+    if route_actions:
+        display_total = stop_at + len(route_actions)
+
+    display.update("Moving", SERVER_IP, intersections_passed, display_total, route_name)
 
     # Если робот стоит на перекрёстке при старте, нужно сначала съехать с него
     if follower.detect_intersection():
-        robot.drive_degrees(BASE_SPEED, BASE_SPEED, 300)
+        robot.drive_degrees(BASE_SPEED, BASE_SPEED, PASS_INTERSECTION_DEGREES)
 
     # Основной цикл движения по линии с подсчётом перекрёстков
-    while intersections_passed < total_intersections:
+    while True:
         # Проверка кнопки "вниз" для прерывания движения
         if button.down:
             robot.stop()
@@ -165,17 +194,48 @@ def movement(robot, follower, display, button, route_name="", total_intersection
             on_intersection = True
             intersections_passed += 1
 
-            display.update("Moving", SERVER_IP, intersections_passed, total_intersections, route_name)
+            display.update("Moving", SERVER_IP, intersections_passed, display_total, route_name)
 
             # Задержка на нужном перекрёстке
+            just_picked_up = False
             if intersections_passed == stop_at:
                 robot.stop()
-                display.update("Picking up passengers", SERVER_IP, intersections_passed, total_intersections, route_name)
+                display.update("Picking up passengers", SERVER_IP, intersections_passed, display_total, route_name)
                 time.sleep(STOP_DELAY)
-                display.update("Moving", SERVER_IP, intersections_passed, total_intersections, route_name)
+                display.update("Moving", SERVER_IP, intersections_passed, display_total, route_name)
+                picked_up_passengers = True
+                just_picked_up = True
 
-            # Проезжаем перекрёсток, чтобы не считать его повторно
-            robot.drive_degrees(BASE_SPEED, BASE_SPEED, 300)
+            # Если для маршрута задан сценарий после остановки - выполняем его.
+            # Первый перекрёсток с действиями начинается ПОСЛЕ перекрёстка остановки.
+            if route_actions and picked_up_passengers and not just_picked_up:
+                post_stop_intersections += 1
+                action = route_actions[post_stop_intersections - 1] if post_stop_intersections <= len(route_actions) else "stop"
+
+                if action == "left":
+                    display.update("Turn left", SERVER_IP, intersections_passed, display_total, route_name)
+                    robot.drive_degrees(-TURN_SPEED, TURN_SPEED, TURN_DEGREES)
+                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, AFTER_TURN_DEGREES)
+                elif action == "right":
+                    display.update("Turn right", SERVER_IP, intersections_passed, display_total, route_name)
+                    robot.drive_degrees(TURN_SPEED, -TURN_SPEED, TURN_DEGREES)
+                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, AFTER_TURN_DEGREES)
+                elif action == "straight":
+                    display.update("Go straight", SERVER_IP, intersections_passed, display_total, route_name)
+                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, PASS_INTERSECTION_DEGREES)
+                elif action == "stop":
+                    robot.stop()
+                    break
+                else:
+                    # Неизвестное действие: безопасно едем прямо
+                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, PASS_INTERSECTION_DEGREES)
+            else:
+                # Проезжаем перекрёсток, чтобы не считать его повторно
+                robot.drive_degrees(BASE_SPEED, BASE_SPEED, PASS_INTERSECTION_DEGREES)
+
+                # Старое поведение для маршрутов без специальных сценариев
+                if not route_actions and intersections_passed >= total_intersections:
+                    break
 
         elif not is_intersection:
             # Покинули перекрёсток - сбрасываем флаг

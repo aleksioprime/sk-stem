@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-02-08T00:59:40.367497+03:00 by Eclipse SUMO GUI 1.26.0
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/stem.net.xml"/>
+        <route-files value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/stem.rou.xml"/>
+        <additional-files value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/stem.add.xml"/>
+    </input>
+
+    <output>
+        <summary-output value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/summary.xml"/>
+        <tripinfo-output value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/tripinfo.xml"/>
+        <vehroute-output value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/routes.xml"/>
+        <stop-output value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/stopinfo.xml"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="1500"/>
+        <step-length value="0.1"/>
+    </time>
+
+    <processing>
+        <time-to-teleport value="-1"/>
+    </processing>
+
+    <report>
+        <verbose value="true"/>
+        <no-step-log value="false"/>
+    </report>
+
+    <gui_only>
+        <quit-on-end value="false"/>
+        <start value="true"/>
+    </gui_only>
+
+</sumoConfiguration>
+-->
+
+<tripinfos xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/tripinfo_file.xsd">
+    <tripinfo id="bus1_1" depart="0.00" departLane="main_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="298.80" arrivalLane="main_street_3_0" arrivalPos="300.00" arrivalSpeed="13.87" duration="298.80" routeLength="894.30" waitingTime="0.00" waitingCount="0" stopTime="160.00" timeLoss="3.84" rerouteNo="0" devices="vehroute_bus1_1 tripinfo_bus1_1" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus2_1" depart="50.00" departLane="south_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="338.00" arrivalLane="south_street_3_0" arrivalPos="300.00" arrivalSpeed="13.86" duration="288.00" routeLength="894.30" waitingTime="0.00" waitingCount="0" stopTime="150.00" timeLoss="3.39" rerouteNo="0" devices="vehroute_bus2_1 tripinfo_bus2_1" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus3_1" depart="100.00" departLane="west_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="416.10" arrivalLane="south_street_3_0" arrivalPos="300.00" arrivalSpeed="13.88" duration="316.10" routeLength="1302.17" waitingTime="0.00" waitingCount="0" stopTime="150.00" timeLoss="3.37" rerouteNo="0" devices="vehroute_bus3_1 tripinfo_bus3_1" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus1_2" depart="300.00" departLane="main_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="598.40" arrivalLane="main_street_3_0" arrivalPos="300.00" arrivalSpeed="13.86" duration="298.40" routeLength="894.30" waitingTime="0.00" waitingCount="0" stopTime="160.00" timeLoss="3.40" rerouteNo="0" devices="vehroute_bus1_2 tripinfo_bus1_2" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus2_2" depart="350.00" departLane="south_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="637.70" arrivalLane="south_street_3_0" arrivalPos="300.00" arrivalSpeed="13.85" duration="287.70" routeLength="894.30" waitingTime="0.10" waitingCount="1" stopTime="150.00" timeLoss="3.24" rerouteNo="0" devices="vehroute_bus2_2 tripinfo_bus2_2" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus3_2" depart="400.00" departLane="west_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="717.00" arrivalLane="south_street_3_0" arrivalPos="300.00" arrivalSpeed="13.84" duration="317.00" routeLength="1302.17" waitingTime="0.00" waitingCount="0" stopTime="150.00" timeLoss="3.79" rerouteNo="0" devices="vehroute_bus3_2 tripinfo_bus3_2" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus1_3" depart="600.00" departLane="main_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="897.50" arrivalLane="main_street_3_0" arrivalPos="300.00" arrivalSpeed="13.84" duration="297.50" routeLength="894.30" waitingTime="0.00" waitingCount="0" stopTime="160.00" timeLoss="3.45" rerouteNo="0" devices="vehroute_bus1_3 tripinfo_bus1_3" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus2_3" depart="650.00" departLane="south_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="938.00" arrivalLane="south_street_3_0" arrivalPos="300.00" arrivalSpeed="13.85" duration="288.00" routeLength="894.30" waitingTime="0.00" waitingCount="0" stopTime="150.00" timeLoss="3.52" rerouteNo="0" devices="vehroute_bus2_3 tripinfo_bus2_3" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus3_3" depart="700.00" departLane="west_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="1016.80" arrivalLane="south_street_3_0" arrivalPos="300.00" arrivalSpeed="13.88" duration="316.80" routeLength="1302.17" waitingTime="0.00" waitingCount="0" stopTime="150.00" timeLoss="3.62" rerouteNo="0" devices="vehroute_bus3_3 tripinfo_bus3_3" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus1_4" depart="900.00" departLane="main_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="1197.90" arrivalLane="main_street_3_0" arrivalPos="300.00" arrivalSpeed="13.85" duration="297.90" routeLength="894.30" waitingTime="0.00" waitingCount="0" stopTime="160.00" timeLoss="3.38" rerouteNo="0" devices="vehroute_bus1_4 tripinfo_bus1_4" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus2_4" depart="950.00" departLane="south_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="1238.70" arrivalLane="south_street_3_0" arrivalPos="300.00" arrivalSpeed="13.84" duration="288.70" routeLength="894.30" waitingTime="0.00" waitingCount="0" stopTime="150.00" timeLoss="3.59" rerouteNo="0" devices="vehroute_bus2_4 tripinfo_bus2_4" vType="bus" speedFactor="1.00" vaporized=""/>
+    <tripinfo id="bus3_4" depart="1000.00" departLane="west_street_1_0" departPos="12.10" departSpeed="0.00" departDelay="0.00" arrival="1317.10" arrivalLane="south_street_3_0" arrivalPos="300.00" arrivalSpeed="13.88" duration="317.10" routeLength="1302.17" waitingTime="0.00" waitingCount="0" stopTime="150.00" timeLoss="3.92" rerouteNo="0" devices="vehroute_bus3_4 tripinfo_bus3_4" vType="bus" speedFactor="1.00" vaporized=""/>
+</tripinfos>

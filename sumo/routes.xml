@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-02-08T00:59:40.368536+03:00 by Eclipse SUMO GUI 1.26.0
+<sumoConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/stem.net.xml"/>
+        <route-files value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/stem.rou.xml"/>
+        <additional-files value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/stem.add.xml"/>
+    </input>
+
+    <output>
+        <summary-output value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/summary.xml"/>
+        <tripinfo-output value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/tripinfo.xml"/>
+        <vehroute-output value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/routes.xml"/>
+        <stop-output value="/Users/aleksioprime/edu/gymnasium/sk-stem/sumo/stopinfo.xml"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="1500"/>
+        <step-length value="0.1"/>
+    </time>
+
+    <processing>
+        <time-to-teleport value="-1"/>
+    </processing>
+
+    <report>
+        <verbose value="true"/>
+        <no-step-log value="false"/>
+    </report>
+
+    <gui_only>
+        <quit-on-end value="false"/>
+        <start value="true"/>
+    </gui_only>
+
+</sumoConfiguration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vehicle id="bus1_1" type="bus" depart="0.00" color="red" line="1" arrival="298.80">
+        <route edges="main_street_1 main_street_2 main_street_3"/>
+        <stop busStop="stop1_1" duration="20.00"/>
+        <stop busStop="stop1_2" duration="20.00"/>
+        <stop busStop="stop1_3" duration="30.00"/>
+        <stop busStop="stop1_4" duration="20.00"/>
+        <stop busStop="stop1_5" duration="30.00"/>
+        <stop busStop="stop1_6" duration="20.00"/>
+        <stop busStop="stop1_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus2_1" type="bus" depart="50.00" color="blue" line="2" arrival="338.00">
+        <route edges="south_street_1 south_street_2 south_street_3"/>
+        <stop busStop="stop2_1" duration="20.00"/>
+        <stop busStop="stop2_2" duration="20.00"/>
+        <stop busStop="stop2_3" duration="20.00"/>
+        <stop busStop="stop2_4" duration="20.00"/>
+        <stop busStop="stop2_5" duration="30.00"/>
+        <stop busStop="stop2_6" duration="20.00"/>
+        <stop busStop="stop2_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus3_1" type="bus" depart="100.00" color="green" line="3" arrival="416.10">
+        <route edges="west_street_1 west_street_2 south_street_1 south_street_2 south_street_3"/>
+        <stop busStop="stop3_1" duration="20.00"/>
+        <stop busStop="stop3_2" duration="20.00"/>
+        <stop busStop="stop3_3" duration="20.00"/>
+        <stop busStop="stop3_4" duration="20.00"/>
+        <stop busStop="stop2_5" duration="30.00"/>
+        <stop busStop="stop3_6" duration="20.00"/>
+        <stop busStop="stop3_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus1_2" type="bus" depart="300.00" color="red" line="1" arrival="598.40">
+        <route edges="main_street_1 main_street_2 main_street_3"/>
+        <stop busStop="stop1_1" duration="20.00"/>
+        <stop busStop="stop1_2" duration="20.00"/>
+        <stop busStop="stop1_3" duration="30.00"/>
+        <stop busStop="stop1_4" duration="20.00"/>
+        <stop busStop="stop1_5" duration="30.00"/>
+        <stop busStop="stop1_6" duration="20.00"/>
+        <stop busStop="stop1_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus2_2" type="bus" depart="350.00" color="blue" line="2" arrival="637.70">
+        <route edges="south_street_1 south_street_2 south_street_3"/>
+        <stop busStop="stop2_1" duration="20.00"/>
+        <stop busStop="stop2_2" duration="20.00"/>
+        <stop busStop="stop2_3" duration="20.00"/>
+        <stop busStop="stop2_4" duration="20.00"/>
+        <stop busStop="stop2_5" duration="30.00"/>
+        <stop busStop="stop2_6" duration="20.00"/>
+        <stop busStop="stop2_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus3_2" type="bus" depart="400.00" color="green" line="3" arrival="717.00">
+        <route edges="west_street_1 west_street_2 south_street_1 south_street_2 south_street_3"/>
+        <stop busStop="stop3_1" duration="20.00"/>
+        <stop busStop="stop3_2" duration="20.00"/>
+        <stop busStop="stop3_3" duration="20.00"/>
+        <stop busStop="stop3_4" duration="20.00"/>
+        <stop busStop="stop2_5" duration="30.00"/>
+        <stop busStop="stop3_6" duration="20.00"/>
+        <stop busStop="stop3_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus1_3" type="bus" depart="600.00" color="red" line="1" arrival="897.50">
+        <route edges="main_street_1 main_street_2 main_street_3"/>
+        <stop busStop="stop1_1" duration="20.00"/>
+        <stop busStop="stop1_2" duration="20.00"/>
+        <stop busStop="stop1_3" duration="30.00"/>
+        <stop busStop="stop1_4" duration="20.00"/>
+        <stop busStop="stop1_5" duration="30.00"/>
+        <stop busStop="stop1_6" duration="20.00"/>
+        <stop busStop="stop1_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus2_3" type="bus" depart="650.00" color="blue" line="2" arrival="938.00">
+        <route edges="south_street_1 south_street_2 south_street_3"/>
+        <stop busStop="stop2_1" duration="20.00"/>
+        <stop busStop="stop2_2" duration="20.00"/>
+        <stop busStop="stop2_3" duration="20.00"/>
+        <stop busStop="stop2_4" duration="20.00"/>
+        <stop busStop="stop2_5" duration="30.00"/>
+        <stop busStop="stop2_6" duration="20.00"/>
+        <stop busStop="stop2_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus3_3" type="bus" depart="700.00" color="green" line="3" arrival="1016.80">
+        <route edges="west_street_1 west_street_2 south_street_1 south_street_2 south_street_3"/>
+        <stop busStop="stop3_1" duration="20.00"/>
+        <stop busStop="stop3_2" duration="20.00"/>
+        <stop busStop="stop3_3" duration="20.00"/>
+        <stop busStop="stop3_4" duration="20.00"/>
+        <stop busStop="stop2_5" duration="30.00"/>
+        <stop busStop="stop3_6" duration="20.00"/>
+        <stop busStop="stop3_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus1_4" type="bus" depart="900.00" color="red" line="1" arrival="1197.90">
+        <route edges="main_street_1 main_street_2 main_street_3"/>
+        <stop busStop="stop1_1" duration="20.00"/>
+        <stop busStop="stop1_2" duration="20.00"/>
+        <stop busStop="stop1_3" duration="30.00"/>
+        <stop busStop="stop1_4" duration="20.00"/>
+        <stop busStop="stop1_5" duration="30.00"/>
+        <stop busStop="stop1_6" duration="20.00"/>
+        <stop busStop="stop1_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus2_4" type="bus" depart="950.00" color="blue" line="2" arrival="1238.70">
+        <route edges="south_street_1 south_street_2 south_street_3"/>
+        <stop busStop="stop2_1" duration="20.00"/>
+        <stop busStop="stop2_2" duration="20.00"/>
+        <stop busStop="stop2_3" duration="20.00"/>
+        <stop busStop="stop2_4" duration="20.00"/>
+        <stop busStop="stop2_5" duration="30.00"/>
+        <stop busStop="stop2_6" duration="20.00"/>
+        <stop busStop="stop2_7" duration="20.00"/>
+    </vehicle>
+
+    <vehicle id="bus3_4" type="bus" depart="1000.00" color="green" line="3" arrival="1317.10">
+        <route edges="west_street_1 west_street_2 south_street_1 south_street_2 south_street_3"/>
+        <stop busStop="stop3_1" duration="20.00"/>
+        <stop busStop="stop3_2" duration="20.00"/>
+        <stop busStop="stop3_3" duration="20.00"/>
+        <stop busStop="stop3_4" duration="20.00"/>
+        <stop busStop="stop2_5" duration="30.00"/>
+        <stop busStop="stop3_6" duration="20.00"/>
+        <stop busStop="stop3_7" duration="20.00"/>
+    </vehicle>
+
+</routes>
