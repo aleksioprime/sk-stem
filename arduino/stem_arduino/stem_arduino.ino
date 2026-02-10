@@ -16,10 +16,10 @@ Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
 // -------------------- Маршруты --------------------
 const uint8_t ROUTES_COUNT = 3;
 
-// Кнопки маршрутов (как у тебя сейчас)
-const uint8_t BTN_ROUTE_GREEN = 13;
+// Кнопки маршрутов
+const uint8_t BTN_ROUTE_GREEN = 10;
 const uint8_t BTN_ROUTE_BLUE = 12;
-const uint8_t BTN_ROUTE_YELOW = 10;
+const uint8_t BTN_ROUTE_YELOW = 13;
 
 const uint8_t BTN_CANCEL = 8;
 

@@ -29,9 +29,11 @@ BASE_SPEED = 30 # Базовая скорость (% от максимально
 KP = 0.2 # Коэффициент пропорциональной части для управления (настройка для лучшего следования по линии)
 MAX_SPEED = 90 # Максимальная скорость (% от максимальной)
 TURN_SPEED = 25 # Скорость поворота на перекрёстке
-TURN_DEGREES = 220 # Градусы поворота (подбирается под геометрию трассы)
-PASS_INTERSECTION_DEGREES = 300 # Проезд перекрёстка прямо
-AFTER_TURN_DEGREES = 220 # Движение вперёд после поворота для захвата линии
+TURN_DEGREES = 180 # Градусы поворота (подбирается под геометрию трассы)
+UTURN_DEGREES = 360 # Градусы разворота (обычно около 2 * TURN_DEGREES)
+PASS_INTERSECTION_DEGREES = 100 # Проезд перекрёстка прямо
+BEFORE_TURN_DEGREES = 100 # Движение вперёд после поворота для захвата линии
+PAUSE_DELAY = 2.0 # Пауза на перекрёстке для действия "pause" (секунды)
 
 # Калибровка датчиков
 L_WHITE = 70 # Отражение белого для левого датчика
@@ -41,9 +43,12 @@ R_BLACK = 8 # Отражение чёрного для правого датчи
 
 # Сценарии движения по перекрёсткам после остановки "Picking up passengers"
 # Для green:
-# 1 - left, 2 - straight, 3 - right, 4 - stop
+# 1 - left, 2 - straight, 3 - right, 4 - stop, 5 - u_turn, 6 - pause
+# Доступные действия: left, straight, right, stop, u_turn, pause
 ROUTE_POST_STOP_ACTIONS = {
-    "green": ("left", "straight", "right", "stop"),
+    "green": ("straight", "u_turn", "straight", "straight", "stop"),
+    "blue": ("left", "right", "u_turn", "left", "right", "straight", "stop"),
+    "yellow": ("left", "straight", "right", "u_turn", "left", "straight", "right", "straight", "stop"),
 }
 
 
@@ -173,9 +178,8 @@ def movement(robot, follower, display, button, route_name="", total_intersection
 
     display.update("Moving", SERVER_IP, intersections_passed, display_total, route_name)
 
-    # Если робот стоит на перекрёстке при старте, нужно сначала съехать с него
-    if follower.detect_intersection():
-        robot.drive_degrees(BASE_SPEED, BASE_SPEED, PASS_INTERSECTION_DEGREES)
+    # Робот выезжает со зоны старта на линию
+    robot.drive_degrees(BASE_SPEED, BASE_SPEED, 300)
 
     # Основной цикл движения по линии с подсчётом перекрёстков
     while True:
@@ -214,16 +218,28 @@ def movement(robot, follower, display, button, route_name="", total_intersection
 
                 if action == "left":
                     display.update("Turn left", SERVER_IP, intersections_passed, display_total, route_name)
+                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, BEFORE_TURN_DEGREES)
                     robot.drive_degrees(-TURN_SPEED, TURN_SPEED, TURN_DEGREES)
-                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, AFTER_TURN_DEGREES)
                 elif action == "right":
                     display.update("Turn right", SERVER_IP, intersections_passed, display_total, route_name)
+                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, BEFORE_TURN_DEGREES)
                     robot.drive_degrees(TURN_SPEED, -TURN_SPEED, TURN_DEGREES)
-                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, AFTER_TURN_DEGREES)
                 elif action == "straight":
                     display.update("Go straight", SERVER_IP, intersections_passed, display_total, route_name)
                     robot.drive_degrees(BASE_SPEED, BASE_SPEED, PASS_INTERSECTION_DEGREES)
+                elif action == "u_turn":
+                    display.update("U-turn", SERVER_IP, intersections_passed, display_total, route_name)
+                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, BEFORE_TURN_DEGREES)
+                    robot.drive_degrees(-TURN_SPEED, TURN_SPEED, UTURN_DEGREES)
+                elif action == "pause":
+                    robot.stop()
+                    display.update("Pause", SERVER_IP, intersections_passed, display_total, route_name)
+                    time.sleep(PAUSE_DELAY)
+                    display.update("Moving", SERVER_IP, intersections_passed, display_total, route_name)
+                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, PASS_INTERSECTION_DEGREES)
                 elif action == "stop":
+                    robot.drive_degrees(BASE_SPEED, BASE_SPEED, 370)
+                    robot.drive_degrees(-TURN_SPEED, TURN_SPEED, 370)
                     robot.stop()
                     break
                 else:
